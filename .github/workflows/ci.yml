@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://exemplo.supabase.co
+          VITE_SUPABASE_ANON_KEY: chave-de-exemplo
+
+  banco:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migrations + testes de permissão (RLS)
+        run: |
+          psql -v ON_ERROR_STOP=1 -q -f supabase/tests/supabase_stub.sql
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres scripts/migrar.sh
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres scripts/migrar.sh  # 2ª vez não reaplica
+          psql -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_smoke.sql
+          psql -v ON_ERROR_STOP=1 -q -f supabase/seed/albert-282.sql

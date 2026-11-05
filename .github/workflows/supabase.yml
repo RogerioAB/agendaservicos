@@ -1,0 +1,34 @@
+name: Publicar no Supabase
+
+# Aplica as migrations do schema "agendaserv" no projeto Supabase do iCaixa (compartilhado).
+# Não usa `supabase db push` para não misturar com o histórico de migrations do iCaixa.
+# Configure no GitHub (Settings → Secrets and variables → Actions → Secrets):
+#   SUPABASE_DB_URL: connection string do Session pooler (Supabase → Connect), com a senha do banco
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/migrations/**', 'scripts/migrar.sh', '.github/workflows/supabase.yml']
+  workflow_dispatch:
+
+concurrency: supabase-deploy
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Conferir configuração
+        id: cfg
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::Secret SUPABASE_DB_URL não configurado. Pulando a publicação."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+      - name: Banco (migrations do schema agendaserv)
+        if: steps.cfg.outputs.ok == 'true'
+        run: scripts/migrar.sh
