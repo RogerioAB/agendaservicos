@@ -7,5 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY precisam estar definidas (ver .env.example).')
 }
 
-// Os tipos do banco (src/types/database.types.ts) serão gerados com `supabase gen types` após o link do projeto.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// O AgendaServ vive no schema "agendaserv" do projeto Supabase compartilhado com o iCaixa.
+// Os tipos (src/types/database.types.ts) serão gerados com `supabase gen types --schema agendaserv`.
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  db: { schema: 'agendaserv' },
+  auth: { storageKey: 'agendaserv-auth' },
+})

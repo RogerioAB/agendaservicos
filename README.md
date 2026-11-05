@@ -23,7 +23,15 @@ Scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm test`.
 
 ## Banco de dados
 
+O AgendaServ usa o **mesmo projeto Supabase do iCaixa**, num schema próprio: `agendaserv`. Tabelas, funções,
+bucket (`agendaserv-logos`) e triggers têm nome próprio, e nada toca nas tabelas do iCaixa. O cadastro de
+usuários (`auth.users`) é compartilhado entre os dois apps.
+
+Para a API enxergar o schema: Supabase → Settings → API → **Exposed schemas** → adicionar `agendaserv`.
+
 - `supabase/migrations/` — esquema, regras de acesso (RLS) e funções.
+- `scripts/migrar.sh` — aplica as migrations ainda não aplicadas (controle em `agendaserv.migracoes`).
+  Não usamos `supabase db push` para não misturar com o histórico de migrations do iCaixa.
 - `supabase/tests/rls_smoke.sql` — testes das permissões de cada perfil (rodam no CI num Postgres comum,
   com `supabase/tests/supabase_stub.sql` simulando o Supabase).
 - `supabase/seed/albert-282.sql` — cadastro inicial do Albert 282 (272 unidades e os 4 serviços com preço).
@@ -35,15 +43,14 @@ ela entra pela primeira vez, o login é ligado automaticamente.
 
 ### Publicar no Supabase
 
-O workflow `.github/workflows/supabase.yml` aplica as migrations a cada push na `main`. Configure no GitHub:
-
-- Secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`
-- Variable: `SUPABASE_PROJECT_REF`
+O workflow `.github/workflows/supabase.yml` roda `scripts/migrar.sh` a cada push na `main` que mexa em
+migrations. Configure no GitHub o secret `SUPABASE_DB_URL` com a connection string do **Session pooler**
+(Supabase → Connect), incluindo a senha do banco.
 
 Depois do primeiro deploy, cadastre seu usuário como dono da plataforma no SQL Editor:
 
 ```sql
-insert into public.plataforma_admins (user_id)
+insert into agendaserv.plataforma_admins (user_id)
 select id from auth.users where phone = '55DDDNUMERO';
 ```
 

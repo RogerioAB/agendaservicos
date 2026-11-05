@@ -41,6 +41,7 @@ jobs:
       - name: Migrations + testes de permissão (RLS)
         run: |
           psql -v ON_ERROR_STOP=1 -q -f supabase/tests/supabase_stub.sql
-          for f in supabase/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -q -f "$f"; done
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres scripts/migrar.sh
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres scripts/migrar.sh  # 2ª vez não reaplica
           psql -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_smoke.sql
           psql -v ON_ERROR_STOP=1 -q -f supabase/seed/albert-282.sql
