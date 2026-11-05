@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-marca-50: #f0fdfa;
+  --color-marca-100: #ccfbf1;
+  --color-marca-600: #0d9488;
+  --color-marca-700: #0f766e;
+  --color-marca-900: #134e4a;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
